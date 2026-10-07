@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+
+# 测试/临时产物
+.tmp*
+*.log
+mcp_out*.txt
+
+# ZCode 工作流运行残留
+.zcode/
+
+# RTLens 无需随库分发的大件（可选后端，用户自行下载）
+# 如希望 GitHub 安装也带 Verible，删除下一行即可
+rtlens/verible/

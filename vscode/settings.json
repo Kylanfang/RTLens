@@ -1,0 +1,9 @@
+{
+  "//": "RTLens LSP 接入模板：在任意支持自定义 LSP server 的 VS Code 客户端扩展中使用（如 generic LSP client 类扩展）。服务端启动命令: python -m rtlens lsp",
+  "rtlens.server.command": "python",
+  "rtlens.server.args": ["-m", "rtlens", "lsp"],
+  "rtlens.trace.server": "off",
+  "editor.semanticTokenColorCustomizations": {
+    "enabled": true
+  }
+}

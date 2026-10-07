@@ -1,0 +1,48 @@
+{
+  "name": "rtlens-dsh",
+  "version": "6.2.0",
+  "description": "DeepSeek Harness skill bundle for RTLens — evidence-first Verilog/SystemVerilog code intelligence (symbols, hierarchy, references, port checks, change impact) via a zero-dependency Python CLI, plus the `rtlens.evidence/1` machine-readable evidence contract for downstream tools.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "skills",
+    "rtlens",
+    "!rtlens/verible",
+    "examples",
+    "pyproject.toml",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "install.ps1",
+    "install.sh"
+  ],
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "agent-skill",
+    "verilog",
+    "systemverilog",
+    "rtl",
+    "lsp",
+    "fpga"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kylanfang/RTLens.git"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "rtlens"
+version = "6.2.0"
+description = "RTLens - High-fidelity Verilog/SystemVerilog Language Server + AI toolchain (rust-analyzer inspired)"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [{name = "rtlens project"}]
+keywords = ["rtlens", "verilog", "systemverilog", "lsp", "language-server", "mcp", "ai", "fpga", "rtl", "hardware"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Compilers",
+    "Topic :: Software Development :: Debuggers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+]
+
+[project.scripts]
+rtlens = "rtlens.__main__:main"
+
+[project.urls]
+"Homepage" = "https://github.com/Kylanfang/RTLens"
+
+[tool.setuptools.packages.find]
+include = ["rtlens*"]

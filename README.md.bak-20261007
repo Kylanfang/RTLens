@@ -1,0 +1,296 @@
+# RTLens v6.2.0
+
+**RTLens — 给你的 AI 一面看穿 RTL 的透镜。**
+
+**Verilog/SystemVerilog 语言服务器 + AI 工具链：让 AI 编程助手不用 grep 就能真正看懂你的 RTL 工程。**
+
+RTLens 把整个 RTL 工程解析成结构化的符号数据库——模块、端口、参数、信号、例化关系、宏定义与引脚约束一目了然，并把同一套索引能力同时提供给编辑器和 AI 助手。
+
+**RTLens 自身代码 100% 纯 Python 标准库，零强制依赖**；解析引擎为双后端设计：内置 Python 解析器保证开箱即用，检测到 Verible（C++）二进制时自动切换到更快、语法覆盖更完整的后端。Python 3.8+，Windows / Linux / macOS 可用。可选增强：`psutil`（进程级性能采样，缺失时自动降级）。
+
+---
+
+## 一行命令安装
+
+**Windows（PowerShell）：**
+
+```powershell
+irm https://raw.githubusercontent.com/Kylanfang/RTLens/main/install.ps1 | iex
+```
+
+**macOS / Linux：**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Kylanfang/RTLens/main/install.sh | bash
+```
+
+脚本会自动：定位 Python ≥ 3.8 → 下载/定位 RTLens 源码 → 安装 → 自检 → 写入 MCP 配置（自动探测 ZCode / Claude Code / Cursor / Cline / Windsurf / Workbuddy）。
+
+已手动下载仓库时，也可以直接运行 `install.ps1` / `install.sh`，或：
+
+```bash
+cd rtlens && pip install -e . && python -m rtlens setup
+```
+
+## 接入 DeepSeek Harness（DSH 技能插件）
+
+RTLens 打包为 **DSH skill-only 插件**（`rtlens-dsh`）：安装后 agent 按技能名调用（`Use the rtlens skill to ...`），技能教 agent 用内置的零依赖 Python CLI（`python -m rtlens index/query/context/check/trace/...`）对 RTL 工程做证据优先分析——不需要起 MCP/LSP 服务。
+
+```bash
+# 本地路径安装（自用，无需 GitHub）
+dsh plugin --profile <你的 profile> add D:\path\to\rtlens
+
+# 从 GitHub 安装（推送到 GitHub 后，任何人一行安装）
+dsh plugin --profile <你的 profile> add github:Kylanfang/RTLens
+
+# 验证
+dsh --profile <你的 profile> --dump-config | grep rtlens   # 应看到 rtlens-skill-filesystem
+```
+
+依赖：Python ≥ 3.8（`python` 在 PATH 上）；Verible 为可选增强（插件不捆绑，缺失自动降级）。
+
+---
+
+## 目录
+
+- [架构](#架构)
+- [核心能力](#核心能力)
+- [30 秒上手](#30-秒上手)
+- [让 AI 看懂你的工程（MCP 接入）](#让-ai-看懂你的工程mcp-接入)
+- [接入 VS Code（LSP）](#接入-vs-codelsp)
+- [国产 FPGA 支持](#国产-fpga-支持)
+- [证据出口（rtlens evidence）](#证据出口rtlens-evidence)
+- [命令速查](#命令速查)
+- [目录结构](#目录结构)
+- [质量验证](#质量验证)
+- [常见问题](#常见问题)
+- [许可证](#许可证)
+
+---
+
+## 架构
+
+```
+                 ┌────────────────────────────┐
+                 │      WorkspaceIndex        │   ← 统一的符号索引
+                 │  模块 / 端口 / 信号 / 例化  │
+                 └──────────┬─────────────────┘
+                            │ 解析结果回填
+        ┌───────────────────┴───────────────────┐
+        │                                       │
+  内置 Python 解析器                    Verible 后端（可选）
+  （词法 + 语法分析，                   （调用 verible-verilog-syntax
+   纯标准库，永远可用）                   的 JSON 输出，C++ 实现）
+```
+
+- **后端自动选择**：检测到 Verible 二进制即使用 C++ 后端；不存在时无缝回退到内置 Python 解析器。对上层所有 MCP 工具、LSP 方法而言，两条路径行为一致，无需用户干预。
+- **Verible 二进制**：本仓库附带 Windows 版 Verible 二进制（`rtlens/verible/` 目录，Apache-2.0 协议，版权归 Google / CHIPS Alliance 所有）。Linux / macOS 用户可从 [Verible 官方 Release](https://github.com/chipsalliance/verible/releases) 自行下载放入该目录，或直接使用内置 Python 解析器。
+
+## 核心能力
+
+| 接口形态 | 规模 | 说明 |
+|---|---|---|
+| LSP（编辑器接入） | 17 种方法 | 跳转定义、查找引用、自动补全、重命名、语义高亮（13 类 token × 6 修饰符）、代码折叠、CodeLens、嵌入提示（Inlay Hint）等 |
+| MCP（AI 接入） | 42 个工具 | 例化层级树、端口一致性检查、信号驱动源查询、变更影响分析、设计指标统计、仿真日志解析、testbench 自动生成等 |
+| REST API | 28 个端点 | 包含实时性能监控数据 |
+| Web 仪表盘 | 11 个标签页 | 索引统计、符号浏览、MCP 调用耗时实时展示 |
+| 终端界面（TUI） | 17 条命令 | 在终端内交互式查询工程信息 |
+
+## 30 秒上手
+
+```bash
+# 方式一：一行命令安装并配置（见上文）
+# 方式二：源码直接运行（推荐）
+python -m rtlens quickstart
+
+# 方式三：pip 安装
+pip install -e .
+rtlens quickstart
+```
+
+Windows 用户也可以**直接双击 `start.bat`**。
+
+启动后浏览器自动打开 `http://127.0.0.1:8765`，并自动索引 `examples/` 目录下的演示工程。
+
+## 让 AI 看懂你的工程（MCP 接入）
+
+一条命令自动完成 AI 工具检测、MCP 配置写入与自测：
+
+```bash
+python -m rtlens setup
+```
+
+自动探测支持：**ZCode**、Claude Code、Cursor、Cline、Windsurf、Workbuddy。
+也可以手动配置：
+
+**ZCode（用户级，`~/.zcode/cli/config.json`）** — 注意 ZCode 用嵌套的 `mcp.servers` 结构且 schema 严格（多余字段会被丢弃，路径需绝对路径）：
+
+```json
+{
+  "mcp": {
+    "servers": {
+      "rtlens": {
+        "type": "stdio",
+        "command": "C:\\abs\\path\\to\\python.exe",
+        "args": ["-m", "rtlens", "mcp"],
+        "cwd": "C:\\abs\\path\\to\\rtlens",
+        "timeoutMs": 60000
+      }
+    }
+  }
+}
+```
+
+**ZCode（工作区级）** — 在仓库根目录建 `.zcode/config.json`，内容同上（推荐：跟随工程走，不污染全局配置）。
+
+**Claude Code / Cursor / Codex 等（扁平 mcpServers 结构）**，在项目根目录创建 `.mcp.json`：
+
+```json
+{
+  "mcpServers": {
+    "rtlens": {
+      "command": "python",
+      "args": ["-m", "rtlens", "mcp"]
+    }
+  }
+}
+```
+
+配置完成后，Claude Code、Cursor、Codex 等 AI 助手可以直接：
+
+- 查询例化层级树、模块详情、信号驱动源——基于索引的精确结果，而不是靠 grep 猜测
+- 自动检查例化端口连接是否与模块定义一致
+- 代码变更后获得"需要重跑哪些 testbench"的建议清单
+- 解析 iverilog / verilator / vcs 仿真日志，并按错误所在模块聚合
+- 按真实端口定义生成例化模板和 testbench 骨架
+
+详细说明见 `AI_INSTALL_PROMPT.md`（可直接复制给你的 AI 助手，由它自动完成安装配置）与《配置指南_说人话版》（面向非专业用户）。
+
+## 接入 VS Code（LSP）
+
+1. 在任意支持 LSP 的客户端插件中，把服务端启动命令配置为 `python -m rtlens lsp`
+2. 开启语义高亮（semanticTokens）支持
+
+详细配置见 `docs/manual.html` 与 `vscode/settings.json` 模板。
+
+## 国产 FPGA 支持
+
+- 内置 eLinx GTP 原语 stub 定义，并支持通过 `elinx_stubs/*.v` 添加自定义原语
+- 解析 SDC / XDC / PCF 约束文件，提供"信号 → 物理引脚"映射查询
+
+## 证据出口（rtlens evidence）
+
+`rtlens evidence` 把整棵 RTL 工程导出成一份**机器可读、证据级**的 JSON（schema id `rtlens.evidence/1`），用途是**喂给别的工具**：同级插件 **hw-topo-dsh**（硬件拓扑图）直接消费这份事实，而不是自己再扫一遍源码、用启发式猜模块/例化/坐标。需要跨工具传递行号与路径时，走这个出口，不要各自再猜一遍。
+
+```bash
+# 导出到 stdout（单份可解析 JSON 文档）
+python -m rtlens evidence <工程根目录> --json
+
+# 落盘（stdout 为空；不加 --json 时只在 stderr 打印一行摘要）
+python -m rtlens evidence <工程根目录> -o evidence.json
+
+# 落盘 + 打屏，并传入宏定义（-D 可重复，语义同 index 的 +define+）
+python -m rtlens evidence <工程根目录> --json -o evidence.json -D SIM -D W=8
+```
+
+| 参数 | 说明 |
+|---|---|
+| `root`（位置参数） | 要索引的工程根目录 |
+| `-D NAME` / `--define` | 内置宏，**可重复**（`-D SIM`、`-D W=8`），参与 `` `ifdef`` 求值——define 集不同，证据内容不同（实测：同一个 fixture 加 `-D SIM` 后某模块 `portCount` 从 5 变 6） |
+| `-I PATH` / `--include-path` | `` `include`` 搜索路径，可重复 |
+| `-o FILE` / `--out` | 把文档写入该文件（不写 stdout） |
+| `--json` | 把文档打到 stdout |
+| `--compact` | 单行 JSON（默认缩进 2 空格） |
+| `--max-files N` | 最多索引 N 个文件（默认 5000）；**触顶会在 `diagnostics.filesCapped` 如实披露**，因为"没扫到"不等于"不存在" |
+| `--max-signals N` | 单模块 signals 上限（默认 256；超出则该模块带 `signalsTruncated: true`） |
+| `--max-connections N` | 单个例化的连接列表上限（默认 256；超出则该例化带 `connectionsTruncated: true`） |
+
+> `root` 不是目录时以 **exit 2** 报错——不会返回一份空文档。空文档与"这个工程确实没有模块"无法区分，属于静默撒谎。
+
+**消费方必须知道的两条坐标事实**（契约规则 R1 / R2）：
+
+- **行号双基准同时给出**：`line1` 是 1-based（编辑器 / 人类 / hw-topo spec），`line0` 是原始的 0-based 值，恒有 `line1 == line0 + 1`。文档里**不存在**裸 `line` 字段——消费方必须显式挑一个并写明挑了哪个。
+- **路径是 root 相对 POSIX**（正斜杠、无盘符、无前导 `/`），绝对路径单独放在 `absPath` 字段，两者不得混用。
+
+文档同时带 `endLine0`/`endLine1`（模块的 `endmodule` 行、例化语句收尾行）、每个文件的 `sha256` 与 `bytes`，以及命中上限时的截断标记 `signalsTruncated` / `connectionsTruncated`（`connectionCount` 恒为**真实总数**，不是数组长度）；来源信息在 `tool`（含版本）、`root.abs`、`defines`、`generatedAt` 里。完整字段表、枚举定义与 `provenance` 约定见 [`docs/EVIDENCE_CONTRACT.md`](docs/EVIDENCE_CONTRACT.md)——注意 `provenance`（`backend` / `degraded` / `reason` / …）是**下游 bundle 与回执**要写的字段，本命令产出的 JSON 顶层没有该键。
+
+实测（本机 3 个 `.v` 文件的小 fixture，`python -m rtlens evidence <RTL> --json`，节选；`absPath`/`sha256` 已截短、数组字段已省略）：
+
+```json
+{
+  "schema": "rtlens.evidence/1",
+  "tool": { "name": "rtlens", "version": "6.2.0" },
+  "stats": { "files": 3, "modules": 3, "ports": 12, "signals": 3, "params": 2,
+             "instances": 2, "interfaces": 0, "packages": 0, "topModules": ["top"] },
+  "files": [
+    { "path": "dma_engine.v", "absPath": "…\\rtl\\dma_engine.v",
+      "bytes": 697, "lines": 35, "sha256": "b9771ae08b8b67a6…" }
+  ],
+  "instances": [
+    { "parent": "top", "type": "dma_engine", "instance": "u_dma", "file": "top.v",
+      "line0": 5, "line1": 6, "endLine0": 13, "endLine1": 14,
+      "resolution": "declared", "connectionCount": 5 }
+  ]
+}
+```
+
+退出码：成功为 0，缺参数 / 未知选项等用法错误由 argparse 返回 2。注意 **root 不存在不报错**——返回 0 且文档为空（`stats.files = 0`），消费方要自己把这种情况当成"没拿到任何证据"。
+
+## 命令速查
+
+```
+rtlens setup       自动检测 AI 工具、写入 MCP 配置并自测
+rtlens lsp         启动 LSP 服务器（标准输入输出 JSON-RPC）
+rtlens mcp         启动 MCP 服务器（供 AI 助手调用）
+rtlens web         启动 Web 仪表盘（默认端口 8765）
+rtlens api         启动 REST API 服务器
+rtlens tui         启动终端交互界面
+rtlens quickstart  一键体验：索引示例工程 + 打开 Web 仪表盘
+rtlens evidence    导出机器可读证据包（rtlens.evidence/1，供 hw-topo 等下游工具消费）
+rtlens --version   查看版本
+```
+
+## 目录结构
+
+```
+rtlens/              核心代码包（词法 / 语法 / 索引 / 语义 / LSP / MCP 服务器等）
+├── verible/         Verible 二进制（Windows 版，Apache-2.0，可选）
+examples/            6 个演示工程（counter、hierarchy、macros、soc_mini、test_design、elinx_demo）
+tests/               单元与端到端测试（run_tests.py，纯标准库零依赖）
+docs/                用户手册与教程
+vscode/              VS Code LSP 接入配置模板
+install.ps1/.sh      一行命令安装脚本（Windows / macOS / Linux）
+start.bat/start.sh   一键启动脚本
+LICENSE              MIT
+THIRD_PARTY_NOTICES.md  第三方组件声明（Verible 等）
+```
+
+## 质量验证
+
+索引引擎在两个真实开源工程上做过回归验证：
+
+- [PicoRV32](https://github.com/cliffordwolf/PicoRV32)——41 个文件的纯 Verilog RISC-V 内核
+- pulp-platform/common_cells——168 个文件的 SystemVerilog 通用 IP 库
+
+在此过程中持续修复真实工程暴露的解析缺陷（SystemVerilog 包限定类型、`parameter type`、宏统计、genvar 误计等）。
+
+v6.1.0 位置正确性专项：预处理器重构为**行数保持**语义（`` `include`` 不再内联文本、不活跃 `` `ifdef `` 分支逐行置空），符号/引用/诊断/rename 的行号与原文件严格一致——这是 LSP 跳转、诊断定位与 AI 编辑可靠性的基础。同时修复 MCP 请求级错误隔离（单次工具异常不再杀死会话）与 Windows 下的若干路径/编码问题。
+
+## 常见问题
+
+- **提示端口被占用**：换个端口启动，如 `rtlens web --port 8766`
+- **AI 工具里找不到 rtlens**：配置后需要重启 AI 客户端；或按上文 JSON 手动配置
+- **某段代码解析报错但仿真器能跑**：内置解析器覆盖主流 RTL 子集，复杂 SystemVerilog 建议启用 Verible 后端
+- **Linux / macOS 上想用 Verible 后端**：从 [Verible Release](https://github.com/chipsalliance/verible/releases) 下载对应平台二进制放入 `rtlens/verible/`
+- **宏的跨文件累积语义**：与真实编译器一致，`` `define`` 宏按索引顺序在文件间累积（字母序）。同一文件"单独索引"与"随目录索引"可能因宏来源不同而展开不同——例如 PicoRV32 的 `picosoc.v` 单独索引用自有 fallback，随目录索引时 `icebreaker.v` 先定义的 `` `PICOSOC_MEM`` 生效。这是 Verilog 单编译单元的固有语义，不是 bug。
+- **工程用 `` `ifdef`` 宏守卫端口/代码，分析结果不符合预期构建配置**：用 `+define+` 语义传入内置宏——CLI：`python -m rtlens index <dir> -D SIM -D W=8`；MCP：`index_directory` 工具传 `"defines": ["SIM", "W=8"]`。defines 变化会重建索引。
+- **端口检查报 `definition_parse_suspect`**：模块定义的端口列表可能含尚未支持的 SystemVerilog 语法而解析不完整，工具已自动抑制逐端口误报——建议启用 Verible 后端复核。
+
+## 许可证
+
+- **RTLens 自身源代码**：[MIT](LICENSE)
+- **捆绑的 Verible 二进制**：Apache-2.0，版权归 Google / CHIPS Alliance 所有，详见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
+
+---
+
+> 版本与工具数量以 `python -m rtlens --version` 及实际运行为准，文档更新如滞后于代码请以实际行为为准。

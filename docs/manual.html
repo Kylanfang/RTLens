@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RTLens v2.1.0 使用手册</title>
+<style>
+:root {
+  --bg: #1e1e2e;
+  --bg-card: #2a2a3c;
+  --bg-code: #181825;
+  --text: #cdd6f4;
+  --text-dim: #a6adc8;
+  --accent: #89b4fa;
+  --accent2: #a6e3a1;
+  --warn: #f9e2af;
+  --error: #f38ba8;
+  --border: #45475a;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  padding: 0;
+}
+.container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+header {
+  background: linear-gradient(135deg, #1e1e2e, #313244);
+  padding: 48px 24px 32px;
+  border-bottom: 3px solid var(--accent);
+}
+header h1 { font-size: 2.2rem; color: var(--accent); margin-bottom: 8px; }
+header .subtitle { color: var(--text-dim); font-size: 1.1rem; }
+header .meta { margin-top: 16px; display: flex; gap: 16px; flex-wrap: wrap; }
+header .meta span {
+  background: var(--bg-card);
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: var(--accent2);
+}
+nav {
+  background: var(--bg-card);
+  padding: 12px 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+nav a {
+  color: var(--text-dim);
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+nav a:hover { color: var(--accent); background: rgba(137,180,250,0.1); }
+section { padding: 40px 0; border-bottom: 1px solid var(--border); }
+section h2 {
+  font-size: 1.6rem;
+  color: var(--accent);
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--border);
+}
+section h3 {
+  font-size: 1.2rem;
+  color: var(--accent2);
+  margin: 24px 0 12px;
+}
+section h4 {
+  font-size: 1.05rem;
+  color: var(--text);
+  margin: 16px 0 8px;
+}
+p { margin-bottom: 12px; }
+ul, ol { margin: 8px 0 16px 24px; }
+li { margin: 4px 0; }
+code {
+  background: var(--bg-code);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+  font-size: 0.9em;
+  color: var(--warn);
+}
+pre {
+  background: var(--bg-code);
+  padding: 16px 20px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 12px 0;
+  border: 1px solid var(--border);
+}
+pre code {
+  background: none;
+  padding: 0;
+  color: var(--text);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+th, td {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+th { color: var(--accent); font-weight: 600; }
+tr:hover { background: rgba(137,180,250,0.05); }
+.callout {
+  background: var(--bg-card);
+  border-left: 4px solid var(--accent);
+  padding: 16px 20px;
+  margin: 16px 0;
+  border-radius: 0 8px 8px 0;
+}
+.callout.warn { border-left-color: var(--warn); }
+.callout.error { border-left-color: var(--error); }
+.callout-tip {
+  background: rgba(166,227,161,0.1);
+  border-left: 4px solid var(--accent2);
+  padding: 16px 20px;
+  margin: 16px 0;
+  border-radius: 0 8px 8px 0;
+}
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  vertical-align: middle;
+}
+.badge-new { background: var(--accent2); color: var(--bg); }
+.badge-v2 { background: var(--accent); color: var(--bg); }
+.badge-cli { background: var(--warn); color: var(--bg); }
+.badge-api { background: #cba6f7; color: var(--bg); }
+.badge-lsp { background: #f38ba8; color: var(--bg); }
+.badge-mcp { background: #94e2d5; color: var(--bg); }
+.badge-tui { background: #fab387; color: var(--bg); }
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 16px 0;
+}
+.card {
+  background: var(--bg-card);
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.card h4 { color: var(--accent); margin-top: 0; }
+footer { padding: 32px 24px; text-align: center; color: var(--text-dim); font-size: 0.85rem; }
+.toc-num { color: var(--accent); font-weight: 700; margin-right: 8px; }
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin: 16px 0; }
+.stat-box { background: var(--bg-card); padding: 16px; border-radius: 8px; text-align: center; }
+.stat-box .num { font-size: 1.8rem; color: var(--accent); font-weight: 700; }
+.stat-box .label { font-size: 0.8rem; color: var(--text-dim); }
+@media (max-width: 768px) {
+  .grid-2 { grid-template-columns: 1fr; }
+  header h1 { font-size: 1.6rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <h1>RTLens v2.1.0</h1>
+    <div class="subtitle">Verilog/SystemVerilog LSP + AI 接口工具 — 使用手册</div>
+    <div class="meta">
+      <span>纯 Python 零依赖</span>
+      <span>Python 3.8+</span>
+      <span>Windows / Linux / macOS</span>
+      <span>17 LSP 方法</span>
+      <span>16 MCP 工具</span>
+      <span>20 REST 端点</span>
+    </div>
+  </div>
+</header>
+
+<nav>
+  <a href="#install">安装</a>
+  <a href="#quickstart">快速上手</a>
+  <a href="#vscode">VS Code 集成</a>
+  <a href="#lsp">LSP 方法</a>
+  <a href="#cli">CLI 命令</a>
+  <a href="#api">REST API</a>
+  <a href="#mcp">MCP 服务器</a>
+  <a href="#tui">TUI 终端</a>
+  <a href="#config">配置</a>
+  <a href="#troubleshoot">故障排除</a>
+  <a href="#faq">FAQ</a>
+</nav>
+
+<div class="container">
+
+<!-- ==================== 安装 ==================== -->
+<section id="install">
+  <h2><span class="toc-num">01</span>安装</h2>
+
+  <h3>系统要求</h3>
+  <ul>
+    <li><strong>Python 3.8+</strong>（推荐 3.10+）</li>
+    <li>操作系统：Windows 10/11、Linux（Ubuntu/Debian/CentOS/Arch）、macOS 11+</li>
+    <li>无需安装任何第三方包 — 全部使用 Python 标准库</li>
+  </ul>
+
+  <h3>方式一：直接使用（推荐）</h3>
+  <p>下载 ZIP 压缩包，<strong>先解压整个文件夹</strong>，然后启动：</p>
+  <pre><code># Windows（重点！）
+1. 右键 rtlens_v2.1.0.zip → "解压到当前文件夹"
+2. 进入解压后的文件夹
+3. 双击 start.bat
+4. 浏览器自动打开 http://127.0.0.1:8765
+
+# Linux / macOS
+unzip rtlens_v2.1.0.zip
+cd rtlens_v2.1.0
+chmod +x start.sh
+./start.sh</code></pre>
+
+  <div class="callout warn">
+    <strong>⚠ Windows 用户必读：</strong>
+    <ul>
+      <li><strong>必须先解压 ZIP</strong>，不要在压缩包内直接双击 start.bat（会找不到 rtlens 包）。</li>
+      <li><strong>不要用 Win+R 运行</strong> <code>python -m rtlens quickstart</code> — Win+R 从用户主目录执行，找不到 rtlens 模块，窗口一闪就关。请用 <strong>cmd 或 PowerShell</strong>，先 <code>cd</code> 到解压目录再运行。</li>
+      <li><strong>需要 Python 3.8+</strong>。如果没装 Python，start.bat 会自动打开下载页（安装时勾选 "Add python.exe to PATH"）。</li>
+      <li>start.bat 弹出的黑色窗口请<strong>保持打开</strong>，关闭即停止服务。</li>
+    </ul>
+  </div>
+
+  <h3>方式二：pip 安装</h3>
+  <pre><code>cd rtlens
+pip install -e .
+
+# 验证安装
+rtlens --version
+# 输出: rtlens v2.1.0</code></pre>
+
+  <h3>方式三：手动运行</h3>
+  <p>打开 cmd / PowerShell / 终端，<strong>cd 到解压目录</strong>后运行：</p>
+  <pre><code>cd C:\path\to\rtlens      :: Windows
+cd /path/to/rtlens         :: Linux/macOS
+
+python -m rtlens --version
+python -m rtlens quickstart</code></pre>
+
+  <div class="callout-tip">
+    <strong>提示：</strong>方式一最简单 — 解压后双击 <code>start.bat</code>（Windows）或 <code>./start.sh</code>（Linux/macOS），浏览器自动打开 Web UI 仪表盘。如果浏览器没有自动弹出，手动访问 <code>http://127.0.0.1:8765</code>。
+  </div>
+</section>
+
+<!-- ==================== 快速上手 ==================== -->
+<section id="quickstart">
+  <h2><span class="toc-num">02</span>快速上手</h2>
+
+  <h3>30 秒速通</h3>
+  <div class="grid-2">
+    <div class="card">
+      <h4>📍 Web UI 模式</h4>
+      <p>最简单的使用方式 — 浏览器打开可视化仪表盘：</p>
+      <pre><code>python -m rtlens quickstart</code></pre>
+      <p>浏览器自动打开 <code>http://127.0.0.1:8765</code>，可以看到索引统计、符号搜索、模块详情等。</p>
+    </div>
+    <div class="card">
+      <h4>⌨️ CLI 命令行模式</h4>
+      <p>快速索引一个 Verilog 工程：</p>
+      <pre><code>python -m rtlens index ./my_project
+python -m rtlens query ./my_project counter
+python -m rtlens parse ./my_project/top.v</code></pre>
+    </div>
+  </div>
+
+  <h3>一键启动器</h3>
+  <p>v2.1.0 新增了一键启动脚本，无需记忆命令：</p>
+  <div class="grid-2">
+    <div class="card">
+      <h4>Windows: start.bat</h4>
+      <p>双击运行即可。自动检测 Python（py / python / python3）、验证 rtlens 包存在，浏览器自动打开 Web UI。若无 Python 会自动打开下载页。</p>
+    </div>
+    <div class="card">
+      <h4>Linux/macOS: start.sh</h4>
+      <pre><code>chmod +x start.sh
+./start.sh</code></pre>
+    </div>
+  </div>
+
+  <h3>索引你的 Verilog 工程</h3>
+  <pre><code># 索引整个工程目录
+python -m rtlens index /path/to/your/project
+
+# 输出示例:
+# Indexed 8 files
+#   Modules:   7
+#   Ports:     50
+#   Signals:   39
+#   Params:    25
+#   Instances: 7
+
+# 启动 Web UI 并索引指定工程
+python -m rtlens web --root /path/to/your/project</code></pre>
+
+  <h3>交互式终端（TUI）</h3>
+  <pre><code>python -m rtlens tui --root /path/to/your/project
+
+# 进入交互式终端后：
+rtlens> stats          # 查看索引统计
+rtlens> find counter   # 搜索符号
+rtlens> module alu      # 查看模块详情
+rtlens> tree soc_top   # 查看例化层级树
+rtlens> quit            # 退出</code></pre>
+</section>
+
+<!-- ==================== VS Code 集成 ==================== -->
+<section id="vscode">
+  <h2><span class="toc-num">03</span>VS Code 集成（LSP）</h2>
+
+  <p>RTLens 实现了完整的 LSP 协议，可直接集成到 VS Code / Neovim / Emacs 等编辑器。</p>
+
+  <h3>配置步骤</h3>
+  <ol>
+    <li>确保 rtlens 已安装（<code>pip install -e .</code> 或 <code>python -m rtlens --version</code> 可用）</li>
+    <li>在 VS Code 中安装任意 Verilog 语法高亮扩展（如 "Verilog-HDL/SystemVerilog"）</li>
+    <li>配置 LSP 服务器</li>
+  </ol>
+
+  <h4>方法 A：使用 coc.nvim（Neovim）</h4>
+  <pre><code>// ~/.config/nvim/coc-settings.json
+{
+  "languageserver": {
+    "rtlens": {
+      "command": "python",
+      "args": ["-m", "rtlens", "lsp"],
+      "filetypes": ["verilog", "systemverilog"],
+      "rootPatterns": [".git/", "Makefile", "*.f"]
+    }
+  }
+}</code></pre>
+
+  <h4>方法 B：使用 VS Code LSP 扩展</h4>
+  <p>创建一个简单的 VS Code 扩展，或使用 <code>vscode-languageclient</code> 配置：</p>
+  <pre><code>// .vscode/settings.json (参考模板，见 vscode/settings.json)
+{
+  "rtlens.path": "python",
+  "rtlens.args": ["-m", "rtlens", "lsp"],
+  "files.associations": {
+    "*.v": "verilog",
+    "*.sv": "systemverilog",
+    "*.vh": "verilog",
+    "*.svh": "systemverilog"
+  },
+  "editor.semanticHighlighting.enabled": true,
+  "editor.inlayHints.enabled": "on"
+}</code></pre>
+
+  <h4>方法 C：使用 eLinx IDE</h4>
+  <pre><code># 在 eLinx 工程根目录创建配置文件
+python -m rtlens lsp --stub-dir /path/to/elinx/stubs</code></pre>
+
+  <h3>包含路径配置</h3>
+  <p>如果你的工程使用了 <code>\`include</code> 指令，需要指定搜索路径：</p>
+  <pre><code>python -m rtlens lsp -I /path/to/includes -I /path/to/rtl</code></pre>
+</section>
+
+<!-- ==================== LSP 方法 ==================== -->
+<section id="lsp">
+  <h2><span class="toc-num">04</span>LSP 方法清单（17 个）</h2>
+
+  <p>RTLens 实现了 17 个 LSP 方法，参考 rust-analyzer 架构设计：</p>
+
+  <table>
+    <tr><th>方法</th><th>版本</th><th>说明</th><th>类型</th></tr>
+    <tr><td><code>textDocument/definition</code></td><td><span class="badge badge-lsp">LSP</span></td><td>跳转到定义（跨文件）</td><td>导航</td></tr>
+    <tr><td><code>textDocument/references</code></td><td><span class="badge badge-lsp">LSP</span></td><td>查找所有引用</td><td>导航</td></tr>
+    <tr><td><code>textDocument/hover</code></td><td><span class="badge badge-lsp">LSP</span></td><td>悬停提示（端口/参数/实例化信息）</td><td>信息</td></tr>
+    <tr><td><code>textDocument/completion</code></td><td><span class="badge badge-lsp">LSP</span></td><td>代码补全（关键字+符号+原语）</td><td>编辑</td></tr>
+    <tr><td><code>textDocument/documentSymbol</code></td><td><span class="badge badge-lsp">LSP</span></td><td>文档符号列表（大纲视图）</td><td>结构</td></tr>
+    <tr><td><code>textDocument/formatting</code></td><td><span class="badge badge-lsp">LSP</span></td><td>代码格式化</td><td>编辑</td></tr>
+    <tr><td><code>workspace/symbol</code></td><td><span class="badge badge-lsp">LSP</span></td><td>工作区符号搜索</td><td>导航</td></tr>
+    <tr><td><code>textDocument/publishDiagnostics</code></td><td><span class="badge badge-lsp">LSP</span></td><td>诊断推送（未使用信号/未连接端口等）</td><td>诊断</td></tr>
+    <tr><td><code>textDocument/didOpen</code></td><td><span class="badge badge-lsp">LSP</span></td><td>文档打开通知</td><td>同步</td></tr>
+    <tr><td><code>textDocument/didChange</code></td><td><span class="badge badge-lsp">LSP</span></td><td>文档变更通知</td><td>同步</td></tr>
+    <tr><td><code>textDocument/semanticTokens/full</code></td><td><span class="badge badge-v2">v2.0</span></td><td>语义高亮（13 token 类型 × 6 修饰符）</td><td>高亮</td></tr>
+    <tr><td><code>textDocument/foldingRange</code></td><td><span class="badge badge-v2">v2.0</span></td><td>折叠区域（module/always/begin/case）</td><td>结构</td></tr>
+    <tr><td><code>textDocument/selectionRange</code></td><td><span class="badge badge-v2">v2.0</span></td><td>逐层选区扩展（token→行→模块→文件）</td><td>编辑</td></tr>
+    <tr><td><code>textDocument/documentHighlight</code></td><td><span class="badge badge-v2">v2.0</span></td><td>同符号文档内高亮</td><td>高亮</td></tr>
+    <tr><td><code>textDocument/codeLens</code></td><td><span class="badge badge-v2">v2.0</span></td><td>代码透镜（子模块跳转+引用计数）</td><td>导航</td></tr>
+    <tr><td><code>textDocument/inlayHint</code></td><td><span class="badge badge-v2">v2.0</span></td><td>端口名提示（位置连接时显示 .port_name）</td><td>提示</td></tr>
+    <tr><td><code>textDocument/rename</code> + <code>prepareRename</code></td><td><span class="badge badge-v2">v2.0</span></td><td>跨文件重命名</td><td>重构</td></tr>
+  </table>
+
+  <div class="stat-grid">
+    <div class="stat-box"><div class="num">17</div><div class="label">LSP 方法</div></div>
+    <div class="stat-box"><div class="num">13</div><div class="label">Token 类型</div></div>
+    <div class="stat-box"><div class="num">6</div><div class="label">Token 修饰符</div></div>
+    <div class="stat-box"><div class="num">3</div><div class="label">补全触发符</div></div>
+  </div>
+
+  <h3>语义 Token 类型</h3>
+  <p>13 种 token 类型为编辑器提供精确的语义高亮：</p>
+  <div class="grid-2">
+    <div class="card">
+      <h4>Token 类型</h4>
+      <ul>
+        <li><code>namespace</code> — module/package 名</li>
+        <li><code>type</code> — 模块类型引用</li>
+        <li><code>class</code> — class 名</li>
+        <li><code>function</code> — function/task 名</li>
+        <li><code>variable</code> — 信号/wire/reg</li>
+        <li><code>parameter</code> — parameter/localparam</li>
+        <li><code>keyword</code> — Verilog 关键字</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>Token 修饰符</h4>
+      <ul>
+        <li><code>declaration</code> — 声明处</li>
+        <li><code>definition</code> — 定义处</li>
+        <li><code>readonly</code> — parameter/localparam</li>
+        <li><code>static</code> — 静态方法</li>
+        <li><code>modification</code> — 赋值目标</li>
+        <li><code>documentation</code> — 文档注释</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CLI 命令 ==================== -->
+<section id="cli">
+  <h2><span class="toc-num">05</span>CLI 命令参考</h2>
+
+  <table>
+    <tr><th>命令</th><th>说明</th><th>示例</th></tr>
+    <tr><td><code>lsp</code></td><td>启动 LSP 服务器</td><td><code>python -m rtlens lsp</code></td></tr>
+    <tr><td><code>api</code></td><td>启动 REST API 服务器</td><td><code>python -m rtlens api --port 8765</code></td></tr>
+    <tr><td><code>mcp</code></td><td>启动 MCP 服务器</td><td><code>python -m rtlens mcp</code></td></tr>
+    <tr><td><code>web</code></td><td>启动 Web UI 仪表盘</td><td><code>python -m rtlens web --root ./project</code></td></tr>
+    <tr><td><code>quickstart</code> <span class="badge badge-new">v2.1</span></td><td>一键启动（索引示例+Web UI）</td><td><code>python -m rtlens quickstart</code></td></tr>
+    <tr><td><code>tui</code></td><td>启动交互式终端</td><td><code>python -m rtlens tui --root ./project</code></td></tr>
+    <tr><td><code>index</code></td><td>索引目录并打印统计</td><td><code>python -m rtlens index ./project</code></td></tr>
+    <tr><td><code>query</code></td><td>查询符号</td><td><code>python -m rtlens query ./project counter</code></td></tr>
+    <tr><td><code>parse</code></td><td>解析文件并打印 AST</td><td><code>python -m rtlens parse ./top.v</code></td></tr>
+    <tr><td><code>--version</code> <span class="badge badge-new">v2.1</span></td><td>显示版本号</td><td><code>python -m rtlens --version</code></td></tr>
+  </table>
+
+  <h3>通用参数</h3>
+  <table>
+    <tr><th>参数</th><th>说明</th><th>默认值</th></tr>
+    <tr><td><code>--root</code></td><td>工程根目录</td><td>当前目录</td></tr>
+    <tr><td><code>-I, --include-path</code></td><td>\`include 搜索路径（可多次指定）</td><td>[]</td></tr>
+    <tr><td><code>--stub-dir</code></td><td>eLinx 原语 stub 目录</td><td>None</td></tr>
+    <tr><td><code>--port</code></td><td>REST API 端口</td><td>8765</td></tr>
+    <tr><td><code>--host</code></td><td>REST API 绑定地址</td><td>127.0.0.1</td></tr>
+    <tr><td><code>--no-browser</code></td><td>不自动打开浏览器</td><td>false</td></tr>
+  </table>
+</section>
+
+<!-- ==================== REST API ==================== -->
+<section id="api">
+  <h2><span class="toc-num">06</span>REST API 参考（20 端点）</h2>
+
+  <p>启动 REST API：<code>python -m rtlens api --root ./project</code></p>
+
+  <h3>GET 端点</h3>
+  <table>
+    <tr><th>端点</th><th>说明</th></tr>
+    <tr><td><code>GET /api/health</code></td><td>健康检查 + 索引统计</td></tr>
+    <tr><td><code>GET /api/stats</code></td><td>索引统计</td></tr>
+    <tr><td><code>GET /api/symbols?query=counter</code></td><td>符号搜索</td></tr>
+    <tr><td><code>GET /api/module/{name}</code></td><td>模块详情（端口/参数/信号/实例）</td></tr>
+    <tr><td><code>GET /api/references/{name}</code></td><td>查找全部引用</td></tr>
+    <tr><td><code>GET /api/instances/{module}</code></td><td>谁例化了此模块</td></tr>
+    <tr><td><code>GET /api/hierarchy/{top}</code></td><td>例化层级树</td></tr>
+    <tr><td><code>GET /api/drivers?file=...&signal=...</code></td><td>信号驱动源</td></tr>
+    <tr><td><code>GET /api/constraints?signal=...</code></td><td>引脚约束</td></tr>
+    <tr><td><code>GET /api/primitives</code></td><td>eLinx 原语列表</td></tr>
+    <tr><td><code>GET /api/macros</code></td><td>宏定义列表</td></tr>
+    <tr><td><code>GET /api/code-lens?file=...</code></td><td>代码透镜 <span class="badge badge-v2">v2.0</span></td></tr>
+    <tr><td><code>GET /api/semantic-tokens?file=...</code></td><td>语义 token <span class="badge badge-v2">v2.0</span></td></tr>
+    <tr><td><code>GET /api/folding?file=...</code></td><td>折叠区域 <span class="badge badge-v2">v2.0</span></td></tr>
+    <tr><td><code>GET /api/inlay-hints?file=...&start=0&end=100</code></td><td>Inlay hints <span class="badge badge-v2">v2.0</span></td></tr>
+    <tr><td><code>GET /api/document-tree?file=...</code></td><td>层级符号树 <span class="badge badge-v2">v2.0</span></td></tr>
+  </table>
+
+  <h3>POST 端点</h3>
+  <table>
+    <tr><th>端点</th><th>说明</th></tr>
+    <tr><td><code>POST /api/index</code></td><td>索引工程目录 <code>{"root": "..."}</code></td></tr>
+    <tr><td><code>POST /api/parse</code></td><td>解析代码片段 <code>{"code": "..."}</code></td></tr>
+    <tr><td><code>POST /api/expand</code></td><td>预处理（宏展开）<code>{"code": "..."}</code></td></tr>
+    <tr><td><code>POST /api/rename</code></td><td>跨文件重命名 <span class="badge badge-v2">v2.0</span></td></tr>
+    <tr><td><code>POST /api/prepare-rename</code></td><td>检查可重命名 <span class="badge badge-v2">v2.0</span></td></tr>
+  </table>
+
+  <h3>使用示例</h3>
+  <pre><code># 搜索符号
+curl "http://127.0.0.1:8765/api/symbols?query=counter"
+
+# 获取模块详情
+curl "http://127.0.0.1:8765/api/module/alu"
+
+# 解析代码片段
+curl -X POST http://127.0.0.1:8765/api/parse \
+  -H "Content-Type: application/json" \
+  -d '{"code": "module test(input clk); endmodule"}'
+
+# 获取层级树
+curl "http://127.0.0.1:8765/api/hierarchy/soc_top"</code></pre>
+</section>
+
+<!-- ==================== MCP 服务器 ==================== -->
+<section id="mcp">
+  <h2><span class="toc-num">07</span>MCP 服务器（16 工具）</h2>
+
+  <p>MCP（Model Context Protocol）让 AI agent（如 Claude / Cursor / Codex）可以调用 RTLens 的全部能力。</p>
+
+  <h3>配置 MCP 服务器</h3>
+  <pre><code># 在 MCP 客户端配置中添加:
+{
+  "mcpServers": {
+    "rtlens": {
+      "command": "python",
+      "args": ["-m", "rtlens", "mcp", "--root", "/path/to/project"]
+    }
+  }
+}</code></pre>
+
+  <h3>可用工具（16 个）</h3>
+  <table>
+    <tr><th>工具名</th><th>说明</th><th>参数</th></tr>
+    <tr><td><code>search_symbol</code></td><td>搜索符号</td><td>query</td></tr>
+    <tr><td><code>get_module</code></td><td>模块详情</td><td>name</td></tr>
+    <tr><td><code>get_references</code></td><td>查找引用</td><td>name</td></tr>
+    <tr><td><code>get_instances</code></td><td>谁例化了此模块</td><td>module_type</td></tr>
+    <tr><td><code>get_hierarchy</code></td><td>例化层级树</td><td>top_module</td></tr>
+    <tr><td><code>get_drivers</code></td><td>信号驱动源</td><td>file, signal</td></tr>
+    <tr><td><code>get_constraints</code></td><td>引脚约束</td><td>signal?</td></tr>
+    <tr><td><code>parse_code</code></td><td>解析代码片段</td><td>code</td></tr>
+    <tr><td><code>get_macros</code></td><td>宏定义列表</td><td>—</td></tr>
+    <tr><td><code>get_primitives</code></td><td>eLinx 原语列表</td><td>—</td></tr>
+    <tr><td><code>index_directory</code></td><td>索引目录</td><td>root</td></tr>
+    <tr><td><code>rename_symbol</code> <span class="badge badge-v2">v2.0</span></td><td>跨文件重命名</td><td>file, line, col, new_name</td></tr>
+    <tr><td><code>get_code_lens</code> <span class="badge badge-v2">v2.0</span></td><td>代码透镜</td><td>file</td></tr>
+    <tr><td><code>get_document_tree</code> <span class="badge badge-v2">v2.0</span></td><td>层级符号树</td><td>file</td></tr>
+    <tr><td><code>get_semantic_tokens</code> <span class="badge badge-v2">v2.0</span></td><td>语义 token</td><td>file</td></tr>
+    <tr><td><code>get_folding_ranges</code> <span class="badge badge-v2">v2.0</span></td><td>折叠区域</td><td>file</td></tr>
+  </table>
+</section>
+
+<!-- ==================== TUI ==================== -->
+<section id="tui">
+  <h2><span class="toc-num">08</span>TUI 交互式终端（17 命令）</h2>
+
+  <p>启动：<code>python -m rtlens tui --root ./project</code></p>
+
+  <table>
+    <tr><th>命令</th><th>说明</th></tr>
+    <tr><td><code>stats</code></td><td>索引统计</td></tr>
+    <tr><td><code>find &lt;关键词&gt;</code></td><td>搜索符号（模糊匹配）</td></tr>
+    <tr><td><code>module &lt;名字&gt;</code></td><td>模块详情（端口/参数/信号/实例）</td></tr>
+    <tr><td><code>ports &lt;模块&gt;</code></td><td>列出端口</td></tr>
+    <tr><td><code>signals &lt;模块&gt;</code></td><td>列出内部信号</td></tr>
+    <tr><td><code>instances &lt;模块&gt;</code></td><td>列出模块内部实例化</td></tr>
+    <tr><td><code>whoinst &lt;模块&gt;</code></td><td>谁实例化了此模块</td></tr>
+    <tr><td><code>refs &lt;名字&gt;</code></td><td>查找引用</td></tr>
+    <tr><td><code>tree &lt;顶层模块&gt;</code></td><td>ASCII 层级树</td></tr>
+    <tr><td><code>drivers &lt;文件&gt; &lt;信号&gt;</code></td><td>信号驱动源</td></tr>
+    <tr><td><code>macros</code></td><td>宏定义列表</td></tr>
+    <tr><td><code>primitives</code></td><td>eLinx GTP 原语列表</td></tr>
+    <tr><td><code>constraints [信号]</code></td><td>引脚约束</td></tr>
+    <tr><td><code>load &lt;目录&gt;</code></td><td>索引新目录</td></tr>
+    <tr><td><code>rename &lt;文件&gt; &lt;行&gt; &lt;列&gt; &lt;新名&gt;</code> <span class="badge badge-v2">v2.0</span></td><td>跨文件重命名</td></tr>
+    <tr><td><code>codelens &lt;文件&gt;</code> <span class="badge badge-v2">v2.0</span></td><td>代码透镜</td></tr>
+    <tr><td><code>dectree &lt;文件&gt;</code> <span class="badge badge-v2">v2.0</span></td><td>文档符号树</td></tr>
+  </table>
+</section>
+
+<!-- ==================== 配置 ==================== -->
+<section id="config">
+  <h2><span class="toc-num">09</span>配置（ServerConfig）</h2>
+
+  <p>通过 LSP 的 <code>initializationOptions</code> 传入配置（参考 rust-analyzer 设计）：</p>
+
+  <pre><code>{
+  "rtlens": {
+    "diagnostics": {
+      "enable": true,
+      "experimental": false,
+      "maxItems": 200,
+      "disabled": ["unused_signal", "unknown_module"]
+    },
+    "completion": {
+      "addCallParenthesis": true,
+      "snippets": true,
+      "autoImport": true
+    },
+    "indexing": {
+      "autoIndex": true,
+      "exclude": ["**/sim/**", "**/tb/**", "**/.git/**"],
+      "fileTypes": [".v", ".sv", ".vh", ".svh"]
+    },
+    "formatting": {
+      "style": "kr",
+      "indentSize": 4,
+      "alignPorts": true,
+      "maxBlankLines": 1
+    },
+    "elinx": {
+      "stubDir": null,
+      "autoLoadConstraints": true
+    },
+    "logLevel": "info"
+  }
+}</code></pre>
+
+  <div class="callout">
+    <strong>说明：</strong><code>diagnostics.disabled</code> 可以禁用特定诊断类型。<code>indexing.exclude</code> 支持 glob 模式排除目录。<code>formatting.style</code> 支持 <code>"kr"</code>（K&R 风格）和 <code>"allman"</code>（Allman 风格）。
+  </div>
+</section>
+
+<!-- ==================== 故障排除 ==================== -->
+<section id="troubleshoot">
+  <h2><span class="toc-num">10</span>故障排除</h2>
+
+  <h3>端口被占用</h3>
+  <pre><code>[error] Port 8765 already in use. Try --port 8766</code></pre>
+  <p>使用 <code>--port</code> 参数指定其他端口，或使用 <code>start.bat</code> / <code>start.sh</code> 自动选择可用端口。</p>
+
+  <h3>Python 未找到</h3>
+  <p>确保 Python 3.8+ 已安装并加入 PATH。检查：</p>
+  <pre><code>python --version
+# 或
+python3 --version</code></pre>
+
+  <h3>文件未被索引</h3>
+  <ul>
+    <li>确保文件扩展名为 <code>.v</code>、<code>.sv</code>、<code>.vh</code> 或 <code>.svh</code></li>
+    <li>检查 <code>indexing.exclude</code> 配置是否排除了该目录</li>
+    <li>使用 <code>python -m rtlens index &lt;目录&gt;</code> 查看实际索引结果</li>
+  </ul>
+
+  <h3>中文注释乱码</h3>
+  <p>确保文件使用 UTF-8 编码。RTLens 使用 <code>encoding="utf-8", errors="replace"</code> 读取文件，会自动替换无法解码的字符。</p>
+
+  <h3>LSP 服务器无响应</h3>
+  <ul>
+    <li>检查编辑器的 LSP 输出面板是否有错误信息</li>
+    <li>确保 <code>python -m rtlens lsp</code> 能正常启动（在终端中测试）</li>
+    <li>大型工程首次索引可能需要几秒钟，等待索引完成后再操作</li>
+  </ul>
+
+  <h3>Windows VT100 颜色码问题</h3>
+  <p>TUI 在 Windows 10+ 上自动启用 VT100 转义码。如果看到乱码（如 <code>←[36m</code>），运行 <code>rtlens tui</code> 前执行：</p>
+  <pre><code>REG ADD HKCU\CONSOLE /v VirtualTerminalLevel /t REG_DWORD /d 1</code></pre>
+</section>
+
+<!-- ==================== FAQ ==================== -->
+<section id="faq">
+  <h2><span class="toc-num">11</span>FAQ</h2>
+
+  <h3>Q: RTLens 和 Verible / svlangserver 有什么区别？</h3>
+  <p><strong>A:</strong> RTLens 是纯 Python 实现的轻量 LSP，零依赖、跨平台。Verible 是 C++ 实现（编译安装复杂），svlangserver 依赖 Java。RTLens 安装即用，额外提供了 REST API 和 MCP 接口让 AI agent 直接调用。</p>
+
+  <h3>Q: 支持哪些 SystemVerilog 特性？</h3>
+  <p><strong>A:</strong> 支持 module 定义/例化、端口/参数/信号声明、always/initial 块、case/if-else、function/task、generate、typedef/enum/struct、\`include/\`define/\`ifdef 宏预处理。不支持 class 面向对象编程和 assertion。</p>
+
+  <h3>Q: 可以处理大型工程吗？</h3>
+  <p><strong>A:</strong> 可以。默认限制最多索引 5000 个文件（可通过 <code>max_files</code> 参数调整）。索引使用线程安全设计，支持增量更新。</p>
+
+  <h3>Q: 如何集成到 CI/CD 流程？</h3>
+  <p><strong>A:</strong> 使用 REST API 或 CLI 命令。例如：</p>
+  <pre><code># 索引工程并检查是否有未连接端口
+python -m rtlens index ./rtl
+curl http://127.0.0.1:8765/api/stats
+curl "http://127.0.0.1:8765/api/module/top_module" | python -m json.tool</code></pre>
+
+  <h3>Q: 零依赖是什么意思？</h3>
+  <p><strong>A:</strong> 仅使用 Python 标准库（json, os, sys, http.server, cmd, threading, dataclasses, enum, re, urllib 等）。不需要 <code>pip install</code> 任何第三方包。</p>
+
+  <h3>Q: 支持 eLinx / Anlogic FPGA 原语吗？</h3>
+  <p><strong>A:</strong> 支持。使用 <code>--stub-dir</code> 指定 eLinx 原语 stub 目录，即可在补全和悬停中显示原语端口信息。也支持解析 <code>.pcf</code> 约束文件。</p>
+</section>
+
+</div>
+
+<footer>
+  <p>RTLens v2.1.0 — 纯 Python Verilog LSP + AI 接口工具 | <a href="https://dcniaqwtmoca.feishu.cn/page/N1bzmTLHjdVR0saRygZc19TinWb" style="color: var(--accent);">效果演示</a></p>
+  <p>120 项测试全通过 | 17 LSP 方法 | 16 MCP 工具 | 20 REST 端点 | 17 TUI 命令</p>
+</footer>
+
+</body>
+</html>

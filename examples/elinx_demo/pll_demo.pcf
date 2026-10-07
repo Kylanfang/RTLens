@@ -1,0 +1,3 @@
+# pll_demo.pcf — eLinx pin constraints
+set_io clkin A1
+set_io locked E5
